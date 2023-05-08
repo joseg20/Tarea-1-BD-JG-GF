@@ -1,2 +1,2 @@
-# Tarea-1-BD-JG-GF
+# Tareas-BD-JG-GF
 Repositorio tarea Bases de Datos.
