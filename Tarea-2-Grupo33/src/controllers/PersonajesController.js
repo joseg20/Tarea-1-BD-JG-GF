@@ -4,17 +4,22 @@ const createPersonaje = async (req, res, next) => {
     const { nombre, fuerza, fecha_nacimiento, objeto, descripcion, sueldo, fecha_inicio, fecha_termino } = req.body;
     try {
         const newPersonaje = await prisma.personajes.create({
-            data: {
+            data: 
+            {
                 nombre,
                 fuerza,
                 fecha_nacimiento,
                 objeto,
-                personaje_tiene_trabajo: {
-                    create: {
+                personaje_tiene_trabajo: 
+                {
+                    create: 
+                    {
                         fecha_inicio,
                         fecha_termino,
-                        trabajo: {
-                            create: {
+                        trabajo: 
+                        {
+                            create: //cambiar por connect
+                            {
                                 descripcion,
                                 sueldo
                             }

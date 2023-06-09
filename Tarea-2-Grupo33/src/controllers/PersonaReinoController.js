@@ -1,11 +1,11 @@
 import prisma from '../prismaClient.js';
-
 const createPersonaReino = async (req, res, next) => {
-    const { id_reino, id_personaje, fecha_registro, es_gobernante } = req.body;
+    const { id_reino, id_personaje, es_gobernante } = req.body;
     try {
-        if (!id_reino || !id_personaje || !fecha_registro || !es_gobernante) {
+        if (!id_reino || !id_personaje || es_gobernante == null) {
             throw new Error('Bad request');
         }
+        const fecha_registro = new Date(); // Crea la fecha de registro como la fecha y hora actuales
         const newRelPerRein = await prisma.personaje_habita_reino.create({
             data: {
                 id_reino,
@@ -37,11 +37,14 @@ const getPersonaReino = async (req, res, next) => {
 }
 
 const getPersonaReinoById = async (req, res, next) => {
-    const { id } = req.params;
+    const { id_personaje, id_reino } = req.params;
     try {
         const rel_per_rein = await prisma.personaje_habita_reino.findUnique({
             where: {
-                id: parseInt(id),
+                id_personaje_id_reino: {
+                    id_personaje: parseInt(id_personaje),
+                    id_reino: parseInt(id_reino),
+                }
             },
         });
         if (!rel_per_rein) {
@@ -56,41 +59,43 @@ const getPersonaReinoById = async (req, res, next) => {
             error.status = 500; // Internal Server Error
         }
         next(error);
-
     }
 }
 
-//updaate rel_per_rein without id
+
 const updatePersonaReino = async (req, res, next) => {
-    const { id_reino, id_personaje, fecha_registro, es_gobernante } = req.body;
-    const { id } = req.params;
+    const { es_gobernante } = req.body;
+    const { id_personaje, id_reino } = req.params;
     try {
-        if (!id_reino || !id_personaje || !fecha_registro || !es_gobernante) {
-            throw new Error('Bad request');
-        }
+        let data = {};
+
+        if(es_gobernante !== undefined) data.es_gobernante = es_gobernante;
+        
+        data.fecha_registro = new Date();
+
         const updatedRelPerRein = await prisma.personaje_habita_reino.update({
             where: {
-                id_personaje: parseInt(id),
-                id_reino: parseInt(id)
+                id_personaje_id_reino: {
+                    id_personaje: parseInt(id_personaje),
+                    id_reino: parseInt(id_reino)
+                }
             },
-            data: {
-                id_reino,
-                id_personaje,
-                fecha_registro,
-                es_gobernante
-            },
+            data,
         })
         res.status(200).json(updatedRelPerRein);  //OK
     } catch (error) {
-        if (error.message === 'Bad request') {
-            error.status = 400;
-        }
-        else {
+        if (error.code === 'P2025') {
+            error.status = 404;
+            error.message = 'Not Found';
+        } else {
             error.status = 500; // Internal Server Error
         }
         next(error);
     }
 }
+
+
+
 
 const deletePersonaReino = async (req, res, next) => {
     const { id } = req.params;

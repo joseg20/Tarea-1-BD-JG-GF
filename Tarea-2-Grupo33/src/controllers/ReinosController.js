@@ -1,16 +1,27 @@
 import prisma from "../prismaClient.js";
 
 const createReino = async (req, res, next) => {
-    const { nombre, ubicacion,superficie } = req.body;
+    const { nombre, ubicacion, superficie, id_personaje, fecha_registro, es_gobernante } = req.body;
     try {
-        if (!nombre || !ubicacion || !superficie) {
+        if (!nombre || !ubicacion || !superficie || !id_personaje || fecha_registro == null || es_gobernante == null) {
             throw new Error("Bad request");
         }
         const newReino = await prisma.reinos.create({
             data: {
                 nombre,
                 ubicacion,
-                superficie
+                superficie,
+                personaje_habita_reino: {
+                    create: {
+                        fecha_registro,
+                        es_gobernante,
+                        personaje: {
+                            connect: {
+                                id: id_personaje,
+                            },
+                        },
+                    },
+                },
             },
         });
         res.status(200).json(newReino); //OK
@@ -23,6 +34,7 @@ const createReino = async (req, res, next) => {
         next(error);
     }
 }
+
 
 const getReinos = async (req, res, next) => {
     try {
@@ -58,46 +70,60 @@ const getReinoById = async (req, res, next) => {
 
 const updateReino = async (req, res, next) => {
     const { id } = req.params;
-    const { nombre, ubicacion, superficie } = req.body;
+    let { nombre, ubicacion, superficie } = req.body;
     try {
-        if (!nombre || !ubicacion || !superficie) {
-            throw new Error("Bad request");
-        }
+        let data = {};
+
+        if(nombre) data.nombre = nombre;
+        if(ubicacion) data.ubicacion = ubicacion;
+        if(superficie) data.superficie = superficie;
+
         const updatedReino = await prisma.reinos.update({
             where: {
                 id: parseInt(id),
             },
-            data: {
-                nombre,
-                ubicacion,
-                superficie
-            },
+            data: data
         });
+
         res.status(200).json(updatedReino); //OK
-    } catch (error) {
-        if (error.message === "Bad request") {
-            error.status = 400;
+    } catch (err) {
+        if (err.code === 'P2025') { // Error de Prisma cuando no se encuentra un registro
+            res.status(404).json({ error: "Reino not found" });
         } else {
-            error.status = 500; // Internal Server Error
+            next(err);
         }
-        next(error);
     }
 }
+
+
 
 const deleteReino = async (req, res, next) => {
     const { id } = req.params;
     try {
+        // Primero borra las relaciones en personaje_habita_reino
+        await prisma.personaje_habita_reino.deleteMany({
+            where: {
+                id_reino: parseInt(id),
+            },
+        });
+
+        // Luego borra el reino
         const deletedReino = await prisma.reinos.delete({
             where: {
                 id: parseInt(id),
             },
         });
+        
         res.status(200).json(deletedReino); //OK
-    } catch (error) {
-        error.status = 500; // Internal Server Error
-        next(error);
+    } catch (err) {
+        if (err.code === 'P2025') { // Error de Prisma cuando no se encuentra un registro
+            res.status(404).json({ error: "Reino not found" });
+        } else {
+            next(err);
+        }
     }
 }
+
 
 const ReinosController = {
     createReino,

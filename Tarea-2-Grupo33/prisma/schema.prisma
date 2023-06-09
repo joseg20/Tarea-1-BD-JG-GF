@@ -74,10 +74,12 @@ model reinos{
   superficie   Int     //INTEGER NOT NULL
 
   personaje_habita_reino  personaje_habita_reino[]
-  diplomaciasAsociadas1   diplomacias[]   @relation("reino_1_to_diplomacia")
+  diplomaciasAsociadas1   diplomacias[]   @relation("reino_1_to_diplomacia") 
   diplomaciasAsociadas2   diplomacias[]   @relation("reino_2_to_diplomacia")//   diplomacias             diplomacias[]
   reino_defensas          reino_defensas[]
 }
+
+
 
 model defensas {
   id              Int             @id @default(autoincrement())

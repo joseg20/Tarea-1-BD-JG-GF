@@ -99,7 +99,6 @@ const updatePersonajeTrabajo = async (req, res, next) => {
     }
 }
 
-// deleteRelPerTrab with id_trabajo and id_personaje
 const deletePersonajeTrabajo = async (req, res, next) => {
     const { id_trabajo, id_personaje } = req.params;
     try {

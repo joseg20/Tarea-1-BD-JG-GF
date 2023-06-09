@@ -68,9 +68,9 @@ app.delete('/api/personajeTrabajo/:id_trabajo/:id_personaje', PersonajeTrabajoCo
 // Relacion Persona-Reino CRUD routes
 app.post('/api/personaReino', PersonaReinoController.createPersonaReino);
 app.get('/api/personaReino', PersonaReinoController.getPersonaReino);
-app.get('/api/personaReino/:id', PersonaReinoController.getPersonaReinoById);
-app.put('/api/personaReino/:id', PersonaReinoController.updatePersonaReino);
-app.delete('/api/personaReino/:id', PersonaReinoController.deletePersonaReino);
+app.get('/api/personaReino/:id_personaje/:id_reino', PersonaReinoController.getPersonaReinoById);
+app.put('/api/personaReino/:id_personaje/:id_reino', PersonaReinoController.updatePersonaReino);
+app.delete('/api/personaReino/:id_personaje/:id_reino', PersonaReinoController.deletePersonaReino);
 
 // Relacion Defensa-Reino CRUD routes
 app.post('/api/defensaReino', DefensaReinoController.createDefensaReino);
@@ -87,8 +87,9 @@ app.get('/api/cantidadHabitantes/:id', UsersController.getCantidadHabitantes);
 app.get('/api/gobernante/:id?', UsersController.getGobernante);
 
 
-
 //==========================================================//
+//==========================================================//
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
