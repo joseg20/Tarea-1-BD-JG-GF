@@ -1,11 +1,48 @@
 import prisma from '../prismaClient.js';
 
+//==========================================================//
+//Datos importantes                                         //
+//pk: id Integer                                            //
+//modelo VARCHAR(45) NOT NULL                               //
+//color CARCHAR(45) NOT NULL                                //
+//velocidad_maxima INTEGER                                  //
+//fk id_personaje INTEGER                                   //
+//==========================================================//
+//Karts CRUD                                                //
+//==========================================================//
+
+//=============================================//
+//Create Karts                                 //
+//=============================================//
+
 const createKart = async (req, res, next) => {
+    //Parametros
     const { modelo,color,velocidad_maxima, id_personaje } = req.body;
-    try {
-        if (!modelo || !color ) {
-            throw new Error('Bad request');
+    //Validacion de parametros
+    if (!modelo ||
+        modelo.length > 45 ||
+        typeof modelo !== 'string' ||
+        !color || 
+        color.length > 45 ||
+        typeof color !== 'string' ||
+        !Number.isInteger(velocidad_maxima) ||
+        velocidad_maxima < 0 ||
+        !Number.isInteger(id_personaje) ||
+        id_personaje < 0){
+        return next({  status: 400 });
+    }
+    // Verificamos existencia de id_personaje
+    const personaje = await prisma.personajes.findUnique({
+        where: {
+            id: id_personaje
         }
+    });
+    if (!personaje) {
+        return next({  status: 404 });
+    }
+
+    //Creacion
+    try {
         const newKart = await prisma.karts.create({
             data: {
                 modelo,
@@ -38,6 +75,9 @@ const getKarts = async (req, res, next) => {
 
 const getKartById = async (req, res, next) => {
     const { id } = req.params;
+    if (!Number.isInteger(parseInt(id))) {
+        return next({  status: 400 });
+    }
     try {
         const kart = await prisma.karts.findUnique({
             where: {
@@ -62,7 +102,23 @@ const getKartById = async (req, res, next) => {
 
 const updateKart = async (req, res, next) => {
     const { id } = req.params;
+    if (!Number.isInteger(parseInt(id))) {
+        return next({  status: 400 });
+    }
     let { modelo, color, velocidad_maxima, id_personaje } = req.body;
+    //Validacion de parametros
+    if (!modelo ||
+        modelo.length > 45 ||
+        typeof modelo !== 'string' ||
+        !color || 
+        color.length > 45 ||
+        typeof color !== 'string' ||
+        !Number.isInteger(velocidad_maxima) ||
+        velocidad_maxima < 0 ||
+        !Number.isInteger(id_personaje) ||
+        id_personaje < 0){
+        return next({  status: 400 });
+    }
     try {
         let data = {};
 
@@ -94,7 +150,22 @@ const updateKart = async (req, res, next) => {
 
 const deleteKart = async (req, res, next) => {
     const { id } = req.params;
+    //Validacion de parametros
+    if (!Number.isInteger(parseInt(id))) {
+        return next({ status: 400 });
+    }
+    
     try {
+        // Verificamos existencia de id
+        const kart = await prisma.karts.findUnique({
+            where: {
+                id: parseInt(id),
+            }
+        });
+        if (!kart) {
+            return next({ status: 404 });
+        }
+        
         const deletedKart = await prisma.karts.delete({
             where: {
                 id: parseInt(id),
@@ -102,11 +173,11 @@ const deleteKart = async (req, res, next) => {
         });
         res.status(200).json(deletedKart); //OK
     } catch (error) {
-        error.status = 500; // Internal Server Error
+        error.status = error.status || 500; // Internal Server Error
         next(error);
-
     }
 }
+
 
 const KartsController = {
     createKart,
