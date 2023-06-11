@@ -3,10 +3,15 @@ import prisma from '../prismaClient.js';
 
 const createPersonajeTrabajo = async (req, res, next) => {
     const { id_trabajo, id_personaje, fecha_inicio, fecha_termino } = req.body;
+    if (!Number.isInteger(id_trabajo) ||
+        id_trabajo <= 0 ||
+        !Number.isInteger(id_personaje) || 
+        id_personaje <= 0 ||
+        isNaN(new Date(fecha_inicio)) ||
+        fecha_termino && isNaN(new Date(fecha_termino))){
+            return next({ message: 'Bad request', status: 400 });
+    }
     try {
-        if (!id_trabajo || !id_personaje || !fecha_inicio) {
-            throw new Error('Bad request');
-        }
         const newRelPerTrab = await prisma.personaje_tiene_trabajo.create({
             data: {
                 id_trabajo,
@@ -33,15 +38,28 @@ const createPersonajeTrabajo = async (req, res, next) => {
 const getPersonajeTrabajo = async (req, res, next) => {
     try {
         const rel_per_trabs = await prisma.personaje_tiene_trabajo.findMany();
+        if (rel_per_trabs.length === 0) {
+            throw new Error('Not Found');
+        }
         res.status(200).json(rel_per_trabs); //OK
     } catch (error) {
+        if (error.message === 'Not Found') {
+            error.status = 404;
+        } else {
         error.status = 500; // Internal Server Error
+        }
         next(error);
     }
 }
 
 const getPersonajeTrabajoById = async (req, res, next) => {
     const { id_personaje, id_trabajo } = req.params;
+    if (!Number.isInteger(parseInt(id_trabajo)) ||
+        id_trabajo <= 0 ||
+        !Number.isInteger(parseInt(id_personaje)) ||
+        id_personaje <= 0) {
+            return next({ message: 'Bad request', status: 400 });
+        }
     try {
         const rel_per_trab = await prisma.personaje_tiene_trabajo.findMany({
             where: {
@@ -51,10 +69,10 @@ const getPersonajeTrabajoById = async (req, res, next) => {
                 ]
             },
         });
-        if (rel_per_trab.length === 0) {
+        if (!rel_per_trab) {
             throw new Error('Not Found');
         }
-        res.status(200).json(rel_per_trab[0]); //OK
+        res.status(200).json(rel_per_trab); //OK
     } catch (error) {
         if (error.message === 'Not Found') {
             error.status = 404;
@@ -67,10 +85,14 @@ const getPersonajeTrabajoById = async (req, res, next) => {
 }
 
 
-//updatepersonajeTrabajo
-
 const updatePersonajeTrabajo = async (req, res, next) => {
     const { id_trabajo, id_personaje } = req.params;
+    if (!Number.isInteger(parseInt(id_trabajo)) ||
+        id_trabajo <= 0 ||
+        !Number.isInteger(parseInt(id_personaje)) ||
+        id_personaje <= 0) {
+            return next({ message: 'Bad request', status: 400 });
+        }
     let { fecha_inicio, fecha_termino } = req.body;
     try {
         let data = {};
@@ -101,6 +123,12 @@ const updatePersonajeTrabajo = async (req, res, next) => {
 
 const deletePersonajeTrabajo = async (req, res, next) => {
     const { id_trabajo, id_personaje } = req.params;
+    if (!Number.isInteger(parseInt(id_trabajo)) ||
+        id_trabajo <= 0 ||
+        !Number.isInteger(parseInt(id_personaje)) ||
+        id_personaje <= 0) {
+            return next({ message: 'Bad request', status: 400 });
+    }
     try {
         const rel_per_trab = await prisma.personaje_tiene_trabajo.delete({
             where: {
