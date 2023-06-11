@@ -2,6 +2,25 @@ import prisma from '../prismaClient.js'
 
 const createPersonaje = async (req, res, next) => {
     const { nombre, fuerza, fecha_nacimiento, objeto, descripcion, sueldo, fecha_inicio, fecha_termino } = req.body;
+
+    // Validación de datos
+    if (!nombre ||
+        nombre.length > 45 ||
+        typeof nombre !== 'string' ||
+        !Number.isInteger(fuerza) ||
+        fuerza < 0 ||
+        isNaN(new Date(fecha_nacimiento)) ||
+        (objeto && (objeto.length > 30 || typeof objeto !== 'string')) ||
+        !descripcion ||
+        descripcion.length > 45 ||
+        typeof descripcion !== 'string' ||
+        !Number.isInteger(sueldo) ||
+        sueldo < 0 ||
+        isNaN(new Date(fecha_inicio)) ||
+        isNaN(new Date(fecha_termino))) {
+        return next({ status: 400 }); // Bad Request
+    }
+    
     try {
         const newPersonaje = await prisma.personajes.create({
             data: 
@@ -30,11 +49,18 @@ const createPersonaje = async (req, res, next) => {
         })
 
         res.status(200).json(newPersonaje);
-    } catch (err) {
-        err.status = 500;
-        next(err);
+    } catch (error) {
+        if (error.message === 'Bad request') {
+            error.status = 400;
+        }
+        else {
+            error.status = 500; // Internal Server Error
+        }
+        next(error);
     }
 }
+
+
 
 
 const getPersonajes = async (req , res, next) => {
@@ -91,14 +117,25 @@ const getPersonajeById = async (req, res, next) => {
 const updatePersonaje = async (req, res, next) => {
     const { id } = req.params;
     let { nombre, fuerza, fecha_nacimiento, objeto, fecha_inicio, fecha_termino,descripcion,sueldo } = req.body;
+    if (!Number.isInteger(parseInt(id))) {
+        return next({ status: 400 }); // Bad Request
+    }
+    // Validación de datos
+    if (nombre.length > 45 ||
+        typeof nombre !== 'string' ||
+        !Number.isInteger(fuerza) ||
+        fuerza < 0 ||
+        isNaN(new Date(fecha_nacimiento)) ||
+        objeto.length > 30 || 
+        typeof objeto !== 'string'){
+        return next({ status: 400 }); // Bad Request
+    }
     try {
         let data = {};
-
         if(nombre) data.nombre = nombre;
         if(fuerza) data.fuerza = fuerza;
         if(fecha_nacimiento) data.fecha_nacimiento = fecha_nacimiento;
         if(objeto) data.objeto = objeto;
-
 
         const updatedPersonaje = await prisma.personajes.update({
             where: {
@@ -140,6 +177,11 @@ const deletePersonaje = async (req, res, next) => {
                     id_personaje: parseInt(id),
                 },
             }),
+            prisma.personaje_habita_reino.deleteMany({
+                where: {
+                    id_personaje: parseInt(id),
+                },
+            }),
             prisma.personajes.delete({
                 where: {
                     id: parseInt(id),
@@ -167,7 +209,7 @@ const deletePersonaje = async (req, res, next) => {
             }
         }
 
-        res.status(200).json(deletedPersonaje[1]);
+        res.status(200).json(deletedPersonaje[2]);
     } catch (err) {
         if (err.code === 'P2025') {
             err.status = 404;
@@ -191,4 +233,3 @@ export default PersonajesController
 
 
 
-//probados los 5
