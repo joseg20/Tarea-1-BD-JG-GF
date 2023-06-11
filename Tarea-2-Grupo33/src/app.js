@@ -34,16 +34,16 @@ app.use(morgan('dev'));
 //Diplomacias CRUD routes
 app.post('/api/diplomacias', DiplomaciasController.createDiplomacia);
 app.get('/api/diplomacias', DiplomaciasController.getDiplomacias);
-app.get('/api/diplomacias/:id', DiplomaciasController.getDiplomaciaById);
-app.put('/api/diplomacias/:id', DiplomaciasController.updateDiplomacia);
-app.delete('/api/diplomacias/:id', DiplomaciasController.deleteDiplomacia);
+app.get('/api/diplomacias/:id_reino_1/:id_reino_2', DiplomaciasController.getDiplomaciaById);
+app.put('/api/diplomacias/:id_reino_1/:id_reino_2', DiplomaciasController.updateDiplomacia);
+app.delete('/api/diplomacias/:id_reino_1/:id_reino_2', DiplomaciasController.deleteDiplomacia);
 
 //Reinos CRUD routes
 app.post('/api/reinos', ReinosController.createReino);
 app.get('/api/reinos', ReinosController.getReinos);
-app.get('/api/reinos/:id_reino_1/:id_reino_2', ReinosController.getReinoById);
-app.put('/api/reinos/:id_reino_1/:id_reino_2', ReinosController.updateReino);
-app.delete('/api/reinos/:id_reino_1/:id_reino2', ReinosController.deleteReino);
+app.get('/api/reinos/:id', ReinosController.getReinoById);
+app.put('/api/reinos/:id', ReinosController.updateReino);
+app.delete('/api/reinos/:id', ReinosController.deleteReino);
 
 //Karts CRUD routes
 app.post('/api/karts', KartsController.createKart);
