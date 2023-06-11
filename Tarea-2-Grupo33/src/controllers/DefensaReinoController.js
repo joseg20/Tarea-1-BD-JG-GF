@@ -11,22 +11,41 @@ import prisma from '../prismaClient.js';
 const createDefensaReino = async (req, res, next) => {
     //Parametros
     const { id_reino, id_defensa } = req.body;
+
     //Validacion de parametros
-    if (!id_reino || !id_defensa || isNaN(parseInt(id_reino)) || isNaN(parseInt(id_defensa))) {
+    if (!id_reino || 
+        !id_defensa || 
+        isNaN(parseInt(id_reino)) || 
+        isNaN(parseInt(id_defensa))) 
+        {
         next({ message: 'Bad request', status: 400 });
     }
+
     //Creacion
     try {
         const newRelDefRein = await prisma.reino_defensas.create({
             data: {
-                id_reino,
-                id_defensa
+                reinos: {
+                    connect: {
+                        id: parseInt(id_reino),
+                    },
+                },
+                defensas: {
+                    connect: {
+                        id: parseInt(id_defensa),
+                    },
+                },
             },
-        })
-        res.status(200).json(newRelDefRein);  //OK
+        });
+
+        res.status(200).json(newRelDefRein); //OK
     } catch (error) {
         if (error.message === 'Bad request') {
             error.status = 400;
+        } else if (error.message.includes('No \'reinos\' record(s)')) {
+            error.status = 404; // Not Found
+        } else if (error.message.includes('No \'defensas\' record(s)')) {
+            error.status = 404; // Not Found
         }
         else {
             error.status = 500; // Internal Server Error
@@ -60,22 +79,28 @@ const getDefensaReino = async (req, res, next) => {
 //=============================================//
 const getDefensaReinoById = async (req, res, next) => {
     //Parametros
-    const { id } = req.params;
+    const { id_defensa, id_reino } = req.params;
+
     //Validacion de parametros
-    if (!id || isNaN(parseInt(id))) {
+    if (!id_reino || isNaN(parseInt(id_reino)) || !id_defensa || isNaN(parseInt(id_defensa))) {
         next({ message: 'Bad request', status: 400 });
     }
+
     //Busqueda
     try {
         const rel_def_rein = await prisma.reino_defensas.findUnique({
             where: {
-                id_reino: parseInt(id),
-                id_defensa: parseInt(id)
+                reinoId_defensaId: {
+                    reinoId: parseInt(id_reino),
+                    defensaId: parseInt(id_defensa)
+                }
             },
         });
+
         if (!rel_def_rein) {
             throw new Error('Not Found');
         }
+
         res.status(200).json(rel_def_rein); //OK
     } catch (error) {
         if (error.message === 'Not Found') {
@@ -84,66 +109,114 @@ const getDefensaReinoById = async (req, res, next) => {
         else {
             error.status = 500; // Internal Server Error
         }
-        next(error);
 
+        next(error);
     }
 }
+
+
 //=================================================================//
 //Update Relacion Defensa-Reino                                    //
 //=================================================================//
 const updateDefensaReino = async (req, res, next) => {
     //Parametros
-    const { id } = req.params;
-    const { id_reino, id_defensa } = req.body;
+    const { id_defensa, id_reino } = req.params;
+    const { new_id_reino, new_id_defensa } = req.body;
+    
     //Validacion de parametros
-    if (!id || !id_reino || !id_defensa || isNaN(parseInt(id)) || isNaN(parseInt(id_reino)) || isNaN(parseInt(id_defensa))) {
-        next({ message: 'Bad request', status: 400 });
+    if (!id_reino || isNaN(parseInt(id_reino)) || !id_defensa || isNaN(parseInt(id_defensa)) || !new_id_reino || isNaN(parseInt(new_id_reino)) || !new_id_defensa || isNaN(parseInt(new_id_defensa))) {
+        return next({ message: 'Bad request', status: 400 });
     }
+
+    // Verificación de la existencia de los ids de reino y defensa.
+    const reino = await prisma.reinos.findUnique({
+        where: {
+            id: parseInt(new_id_reino),
+        },
+    });
+
+    const defensa = await prisma.defensas.findUnique({
+        where: {
+            id: parseInt(new_id_defensa),
+        },
+    });
+
+    if (!reino || !defensa) {
+        return next({ message: 'Not Found', status: 404 });
+    }
+    
     //Actualizacion
     try {
         const updatedRelDefRein = await prisma.reino_defensas.update({
             where: {
-                id_reino: parseInt(id),
-                id_defensa: parseInt(id)
+                reinoId_defensaId: {
+                    reinoId: parseInt(id_reino),
+                    defensaId: parseInt(id_defensa)
+                },
             },
             data: {
-                id_reino,
-                id_defensa
-            }
-        })
+                reinoId: parseInt(new_id_reino),
+                defensaId: parseInt(new_id_defensa),
+            },
+        });
+
         res.status(200).json(updatedRelDefRein); //OK
+    } catch (error) {
+        if (error instanceof prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+            error.status = 404; // Not Found
+        }
+        else {
+            error.status = 500; // Internal Server Error
+        }
+
+        next(error);
+    }
+}
+
+
+
+
+const deleteDefensaReino = async (req, res, next) => {
+    //Parametros
+    const { id_defensa, id_reino } = req.params;
+    
+    //Validacion de parametros
+    if (!id_reino || isNaN(parseInt(id_reino)) || !id_defensa || isNaN(parseInt(id_defensa))) {
+        next({ message: 'Bad request', status: 400 });
+        return;
+    }
+    
+    // Check if the relationship exists
+    const rel_def_rein = await prisma.reino_defensas.findUnique({
+        where: {
+            reinoId_defensaId: {
+                reinoId: parseInt(id_reino),
+                defensaId: parseInt(id_defensa),
+            }
+        },
+    });
+    if (!rel_def_rein) {
+        next({ message: 'Not Found', status: 404 });
+        return;
+    }
+
+    //Eliminacion
+    try {
+        const deletedRelDefRein = await prisma.reino_defensas.delete({
+            where: {
+                reinoId_defensaId: {
+                    reinoId: parseInt(id_reino),
+                    defensaId: parseInt(id_defensa),
+                }
+            },
+        });
+        res.status(200).json(deletedRelDefRein); //OK
     } catch (error) {
         error.status = 500; // Internal Server Error
         next(error);
     }
 }
 
-const deleteDefensaReino = async (req, res, next) => {
-    //Parametros
-    const { id } = req.params;
-    //Validacion de parametros
-    if (!id || isNaN(parseInt(id))) {
-        next({ message: 'Bad request', status: 400 });
-    }
-    //Eliminacion
-    try {
-        const deletedRelDefRein = await prisma.reino_defensas.delete({
-            where: {
-                id_reino: parseInt(id),
-                id_defensa: parseInt(id)
-            },
-        })
-        res.status(200).json(deletedRelDefRein); //OK
-    } catch (error) {
-        if (error.message === 'Not Found') {
-            error.status = 404;
-        }
-        else {
-            error.status = 500; // Internal Server Error
-        }
-        next(error);
-    }
-}
 
 //=============================================//
 const DefensaReinoController = {
@@ -156,3 +229,4 @@ const DefensaReinoController = {
 //=============================================//
 
 export default DefensaReinoController;
+

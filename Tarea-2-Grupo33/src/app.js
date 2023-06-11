@@ -34,9 +34,9 @@ app.use(morgan('dev'));
 //Diplomacias CRUD routes
 app.post('/api/diplomacias', DiplomaciasController.createDiplomacia);
 app.get('/api/diplomacias', DiplomaciasController.getDiplomacias);
-app.get('/api/diplomacias/:id', DiplomaciasController.getDiplomaciaById);
-app.put('/api/diplomacias/:id', DiplomaciasController.updateDiplomacia);
-app.delete('/api/diplomacias/:id', DiplomaciasController.deleteDiplomacia);
+app.get('/api/diplomacias/:id_reino_1/:id_reino_2', DiplomaciasController.getDiplomaciaById);
+app.put('/api/diplomacias/:id_reino_1/:id_reino_2', DiplomaciasController.updateDiplomacia);
+app.delete('/api/diplomacias/:id_reino_1/:id_reino_2', DiplomaciasController.deleteDiplomacia);
 
 //Reinos CRUD routes
 app.post('/api/reinos', ReinosController.createReino);
@@ -94,9 +94,9 @@ app.delete('/api/personaReino/:id_personaje/:id_reino', PersonaReinoController.d
 // Relacion Defensa-Reino CRUD routes
 app.post('/api/defensaReino', DefensaReinoController.createDefensaReino);
 app.get('/api/defensaReino', DefensaReinoController.getDefensaReino);
-app.get('/api/defensaReino/:id', DefensaReinoController.getDefensaReinoById);
-app.put('/api/defensaReino/:id', DefensaReinoController.updateDefensaReino);
-app.delete('/api/defensaReino/:id', DefensaReinoController.deleteDefensaReino);
+app.get('/api/defensaReino/:id_defensa/:id_reino', DefensaReinoController.getDefensaReinoById);
+app.put('/api/defensaReino/:id_defensa/:id_reino', DefensaReinoController.updateDefensaReino);
+app.delete('/api/defensaReino/:id_defensa/:id_reino', DefensaReinoController.deleteDefensaReino);
 
 //endpoints(Routes)
 
