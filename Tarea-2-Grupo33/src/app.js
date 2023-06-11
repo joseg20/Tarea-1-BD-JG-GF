@@ -6,6 +6,7 @@ import DiplomaciasController from './controllers/DiplomaciasController.js';
 import ReinosController from './controllers/ReinosController.js';
 import KartsController from './controllers/KartsController.js';
 import TrabajosController from './controllers/TrabajosController.js';
+import DefensasController from './controllers/DefensasController.js';
 
 import PersonajeTrabajoController from './controllers/PersonajeTrabajoController.js';
 import PersonaReinoController from './controllers/PersonaReinoController.js';
@@ -16,8 +17,18 @@ import morgan from 'morgan';
 const ENV = process.env;
 const app = express();
 
+//==========================================================//
+// TABLAS CRUD ROUTES                                       //
+//==========================================================//
+
 //middleware
 app.use(express.json());
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({ message: 'Invalid JSON' }); 
+    }
+    next();
+});
 app.use(morgan('dev'));
 
 //Diplomacias CRUD routes
@@ -55,7 +66,15 @@ app.get('/api/personajes/:id', PersonajesController.getPersonajeById);
 app.put('/api/personajes/:id', PersonajesController.updatePersonaje);
 app.delete('/api/personajes/:id', PersonajesController.deletePersonaje);
 
+// Defensas CRUD routes
+app.post('/api/defensas', DefensasController.createDefensa);
+app.get('/api/defensas', DefensasController.getDefensas);
+app.get('/api/defensas/:id', DefensasController.getDefensaById);
+app.put('/api/defensas/:id', DefensasController.updateDefensa);
+app.delete('/api/defensas/:id', DefensasController.deleteDefensa);  
+
 //==========================================================//
+// RELACIONES CRUD ROUTES                                   //
 //==========================================================//
 
 // Relacion Personaje-Trabajo CRUD routes
@@ -88,9 +107,9 @@ app.get('/api/gobernante/:id?', UsersController.getGobernante);
 
 
 //==========================================================//
+// ERROR HANDLING MIDDLEWARE                                //
 //==========================================================//
 
-// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     switch (err.status) {
@@ -109,8 +128,11 @@ app.use((err, req, res, next) => {
     }
 });
 
-
-//Init server
+//==========================================================//
+//Init server                                               //
+//==========================================================//
 app.listen(ENV.API_PORT, () => {
     console.log(`Server running on port ${ENV.API_PORT}`);
 })
+
+
