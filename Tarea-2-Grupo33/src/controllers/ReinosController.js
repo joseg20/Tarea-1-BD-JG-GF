@@ -2,10 +2,31 @@ import prisma from "../prismaClient.js";
 
 const createReino = async (req, res, next) => {
     const { nombre, ubicacion, superficie, id_personaje, fecha_registro, es_gobernante } = req.body;
-    try {
-        if (!nombre || !ubicacion || !superficie || !id_personaje || fecha_registro == null || es_gobernante == null) {
-            throw new Error("Bad request");
+    // Validación de parámetros
+    if (!nombre ||
+        typeof nombre !== 'string' ||
+        nombre.length > 45 ||
+        !ubicacion ||
+        typeof ubicacion !== 'string' ||
+        ubicacion.length > 45 ||
+        !Number.isInteger(superficie) ||
+        superficie < 0 ||
+        fecha_registro == null ||
+        es_gobernante == null ||
+        !Number.isInteger(id_personaje) ||
+        id_personaje < 0) {
+        return next({ status: 400 });
+    }
+    // Verificamos existencia de id_personaje
+    const personaje = await prisma.personajes.findUnique({
+        where: {
+            id: id_personaje
         }
+    });
+    if (!personaje) {
+        return next({  status: 404 });
+    }
+    try {
         const newReino = await prisma.reinos.create({
             data: {
                 nombre,
@@ -71,12 +92,38 @@ const getReinoById = async (req, res, next) => {
 const updateReino = async (req, res, next) => {
     const { id } = req.params;
     let { nombre, ubicacion, superficie } = req.body;
+    // Validación de parámetros
+    if (!nombre ||
+        typeof nombre !== 'string' ||
+        nombre.length > 45 ||
+        !ubicacion ||
+        typeof ubicacion !== 'string' ||
+        ubicacion.length > 45 ||
+        !Number.isInteger(superficie) ||
+        superficie < 0 ||
+        fecha_registro == null ||
+        es_gobernante == null ||
+        !Number.isInteger(id_personaje) ||
+        id_personaje < 0) {
+        return next({ status: 400 });
+    }
+
     try {
         let data = {};
 
-        if(nombre) data.nombre = nombre;
-        if(ubicacion) data.ubicacion = ubicacion;
-        if(superficie) data.superficie = superficie;
+        if (nombre) data.nombre = nombre;
+        if (ubicacion) data.ubicacion = ubicacion;
+        if (superficie) data.superficie = superficie;
+
+        // Verificamos existencia de id
+        const reino = await prisma.reinos.findUnique({
+            where: {
+                id: parseInt(id),
+            }
+        });
+        if (!reino) {
+            return next({  status: 404 });
+        }
 
         const updatedReino = await prisma.reinos.update({
             where: {
@@ -86,33 +133,56 @@ const updateReino = async (req, res, next) => {
         });
 
         res.status(200).json(updatedReino); //OK
-    } catch (err) {
-        if (err.code === 'P2025') { // Error de Prisma cuando no se encuentra un registro
-            res.status(404).json({ error: "Reino not found" });
+    } catch (error) {
+        if (error.message === 'Bad request') {
+            error.status = 400;
         } else {
-            next(err);
+            error.status = 500; // Internal Server Error
         }
+        next(error);
     }
 }
 
 
 
+
 const deleteReino = async (req, res, next) => {
     const { id } = req.params;
+    // Verificamos existencia de id
+    if (!Number.isInteger(parseInt(id))) {
+        return next({ status: 400 });
+    }
+
     try {
-        // Primero borra las relaciones en personaje_habita_reino
+        // Verificamos existencia de id
+        const reino = await prisma.reinos.findUnique({
+            where: {
+                id: parseInt(id),
+            }
+        });
+        if (!reino) {
+            return next({  status: 404 });
+        }
+
+        //  Eliminamos las relaciones
+        await prisma.reino_defensas.deleteMany({
+            where: {
+                reinoId: parseInt(id),
+            },
+        });
+
         await prisma.personaje_habita_reino.deleteMany({
             where: {
                 id_reino: parseInt(id),
             },
         });
-
-        // Luego borra el reino
+        //Se elimina el reino
         const deletedReino = await prisma.reinos.delete({
             where: {
                 id: parseInt(id),
             },
         });
+        
         
         res.status(200).json(deletedReino); //OK
     } catch (err) {
