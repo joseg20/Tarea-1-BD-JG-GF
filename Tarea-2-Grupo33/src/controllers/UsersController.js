@@ -32,6 +32,17 @@ const getPersonajeConMasKarts = async (req, res) => {
 
 const getCantidadHabitantes = async (req, res) => {
     const reinoId = parseInt(req.params.id, 10);
+    if (isNaN(reinoId)) {
+        res.status(400).json({ message: 'Bad Request' });
+        return;
+    }
+
+    const reino = await prisma.reinos.findUnique({
+        where: {
+            id: reinoId,
+        },
+    });
+
     const habitantes = await prisma.personaje_habita_reino.count({
         where: {
             id_reino: reinoId,

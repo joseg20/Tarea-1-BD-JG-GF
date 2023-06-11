@@ -1,11 +1,13 @@
 import prisma from '../prismaClient.js'
 
-const createTrabajo = async (req, res,next) => {
-    const { descripcion, sueldo} = req.body;
+const createTrabajo = async (req, res, next) => {
+    const { descripcion, sueldo } = req.body;
+
+    if (!descripcion || typeof descripcion !== 'string' || isNaN(sueldo)) {
+        return next({ message: 'Bad request', status: 400 });
+    }
+
     try {
-        if (!descripcion || !sueldo) {
-            throw new Error('Bad request');
-        }
         const newTrabajo = await prisma.trabajos.create({
             data: {
                 descripcion,
@@ -14,12 +16,7 @@ const createTrabajo = async (req, res,next) => {
         })
         res.status(200).json(newTrabajo);
     } catch (error) {
-        if (error.message === 'Bad request') {
-            error.status = 400;
-        }
-        else {
-            error.status = 500; // Internal Server Error
-        }
+        error.status = 500; // Internal Server Error
         next(error);
     }
 }
@@ -34,80 +31,113 @@ const getTrabajos = async (req, res,next) => {
     }
 }
 
-const getTrabajoById = async (req, res,next) => {
+const getTrabajoById = async (req, res, next) => {
     const { id } = req.params;
+    const trabajoId = Number(id);
+
+    if (!Number.isInteger(trabajoId)) {
+        return next({ message: 'Bad request', status: 400 });
+    }
+
     try {
-        const trabajo = await prisma.trabajos.findUnique({
-            where: {
-                id: parseInt(id),
-            },
-        });
+        const trabajo = await prisma.trabajos.findUnique({ where: { id: trabajoId } });
         if (!trabajo) {
-            throw new Error('Not Found');
+            return next({ message: 'Not Found', status: 404 });
         }
         res.status(200).json(trabajo);
     } catch (error) {
-        if (error.message === 'Not Found') {
-            error.status = 404;
-        }
-        else {
-            error.status = 500; // Internal Server Error
-        }
+        error.status = 500; // Internal Server Error
         next(error);
-        
     }
 }
 
-const updateTrabajo = async (req, res,next) => {
+const updateTrabajo = async (req, res, next) => {
     const { id } = req.params;
     const { descripcion, sueldo } = req.body;
+    const trabajoId = Number(id);
+
+    if (!Number.isInteger(trabajoId) || !descripcion || typeof descripcion !== 'string' || isNaN(sueldo)) {
+        return next({ message: 'Bad request', status: 400 });
+    }
+
     try {
-        const updateTrabajo = await prisma.trabajos.update({
-            where: {
-                id: parseInt(id),
-            },
-            data: {
-                descripcion,
-                sueldo
-            },
+        const updatedTrabajo = await prisma.trabajos.update({
+            where: { id: trabajoId },
+            data: { descripcion, sueldo }
         });
-        if (!updateTrabajo) {
-            throw new Error('Not Found');
+
+        if (!updatedTrabajo) {
+            return next({ message: 'Not Found', status: 404 });
         }
-        res.status(200).json(updateTrabajo);
+
+        res.status(200).json(updatedTrabajo);
     } catch (error) {
-        if (error.message === 'Not Found') {
-            error.status = 404;
-        }
-        else {
-            error.status = 500; // Internal Server Error
-        }
+        error.status = 500; // Internal Server Error
         next(error);
     }
 }
 
 const deleteTrabajo = async (req, res,next) => {
     const { id } = req.params;
+    if (!id || isNaN(parseInt(id))) {
+        const error = new Error('Bad request');
+        error.status = 400;
+        next(error);
+        return;
+    }
+
     try {
+        // Check if the job exists
+        const trabajo = await prisma.trabajos.findUnique({
+            where: {
+                id: parseInt(id),
+            },
+        });
+
+        if (!trabajo) {
+            const error = new Error('Not Found');
+            error.status = 404;
+            next(error);
+            return;
+        }
+
+        // Find the personajes related to the job
+        const personajesRelacionados = await prisma.personaje_tiene_trabajo.findMany({
+            where: {
+                id_trabajo: parseInt(id),
+            },
+        });
+
+        // Delete the relations in the joining table
+        const deleteRelaciones = personajesRelacionados.map(relacion => {
+            return prisma.personaje_tiene_trabajo.delete({
+                where: { 
+                    id_trabajo_id_personaje: {
+                        id_trabajo: relacion.id_trabajo,
+                        id_personaje: relacion.id_personaje
+                    }
+                },
+            });
+        });
+        await Promise.all(deleteRelaciones);
+
+        // Delete the job
         const deleteTrabajo = await prisma.trabajos.delete({
             where: {
                 id: parseInt(id),
             },
         });
-        if (!deleteTrabajo) {
-            throw new Error('Not Found');
-        }
+
         res.status(200).json(deleteTrabajo);
     } catch (error) {
-        if (error.message === 'Not Found') {
-            error.status = 404;
-        }
-        else {
-            error.status = 500; // Internal Server Error
-        }
+        error.status = error.status || 500; // Internal Server Error
         next(error);
     }
 }
+
+
+
+  
 
 const TrabajosController = {
     createTrabajo,

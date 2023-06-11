@@ -164,6 +164,21 @@ const deleteReino = async (req, res, next) => {
             return next({  status: 404 });
         }
 
+        // Eliminamos las relaciones de diplomacia
+        await prisma.diplomacias.deleteMany({
+            where: {
+                OR: [
+                        {
+                            id_reino_1: parseInt(id),
+                        },
+                    {
+                            id_reino_2: parseInt(id),
+                        },
+                    ],
+                    },
+                    });
+                                
+
         //  Eliminamos las relaciones
         await prisma.reino_defensas.deleteMany({
             where: {

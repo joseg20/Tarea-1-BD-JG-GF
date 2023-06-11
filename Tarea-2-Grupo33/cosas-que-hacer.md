@@ -1,13 +1,7 @@
 # Prioritarias
-* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS PERSONA_TRABAJO 
-* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS REINOS_PERSONA
 
 # IceBox
 * ACTUALIZAR DELETE REINO CUANDO SE HAGA DIPLOMACIA
-* Probar metodo PERSONA_TRABAJO
-* Probar metodo REINOS_PERSONA
-* Probar metodo Endpoints y validar posibles errores
-* probar delete cascada en defensa(ya se hizo en codigo pero no se probo)
 
 * DOCUMENTAR PERSONA_TRABAJO
 * DOCUMENTAR KARTS
@@ -23,12 +17,7 @@
 * Llenar un poco las bases de datos en general
 
 # En progreso
-* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS TRABAJO **jose**
-* Probar metodo TRABAJOS **jose**
-* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS TRABAJO **guillermo**
-* Probar metodo TRABAJOS **guillermo**
-
-
+* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS REINOS_PERSONA **guillermo**
 
 # Terminadas
 * DefensasController FULL SOLIDO TODOS LOS METODOS PROBADOS **jose**
@@ -44,6 +33,13 @@
 * Probar metodo DIPLOMACIA **jose** (update aliados solo cambia el estado de diplomacia)
 * Probar metodo PERSONAS **guillermo**
 * ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS PERSONAS **guillermo**
+* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS TRABAJO **jose**
+* Probar metodo TRABAJOS **jose**
+* Probar metodo Endpoints y validar posibles errores **jose**
+* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS PERSONA_TRABAJO **guillermo**
+* Probar metodo PERSONA_TRABAJO **jose**
+* probar delete cascada en defensa(ya se hizo en codigo pero no se probo)**jose**
+* actualizar reinos al borrar diplomacia **reinos**
 
 
 # OPCIONAL
