@@ -1,22 +1,32 @@
 import prisma from '../prismaClient.js';
 
-const createDiplomacia = async (req, res,next) => {
+const createDiplomacia = async (req, res, next) => {
     const { id_reino_1, id_reino_2, es_aliado } = req.body;
     try {
-        if (!es_aliado){
+        if (!es_aliado || isNaN(parseInt(id_reino_1)) || isNaN(parseInt(id_reino_2))){
             throw new Error('Bad Request');
         }
+
+        // Checking if reinos exist
+        const reino1 = await prisma.reinos.findUnique({ where: { id: parseInt(id_reino_1) } });
+        const reino2 = await prisma.reinos.findUnique({ where: { id: parseInt(id_reino_2) } });
+        if (!reino1 || !reino2) {
+            throw new Error('Reino not found');
+        }
+
         const diplomacia = await prisma.diplomacias.create({
-        data: {
-            id_reino_1,
-            id_reino_2,
-            es_aliado,
-        },
+            data: {
+                id_reino_1,
+                id_reino_2,
+                es_aliado,
+            },
         });
         res.status(201).json(diplomacia);
     } catch (err) {
         if (err.message === 'Bad Request') {
             err.status = 400;
+        } else if (err.message === 'Reino not found') {
+            err.status = 404;
         } else {
             err.status = 500;  // Internal Server Error
         }

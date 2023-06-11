@@ -16,7 +16,7 @@ const createDefensa = async (req, res, next) => {
     const { defensa } = req.body;
     //Validacion de parametros
     if (!defensa || defensa.length > 45){
-        throw new Error('Bad request');
+        return next({ message: 'Bad request', status: 400 });
     }
     //Creacion
     try {
@@ -129,8 +129,20 @@ const deleteDefensa = async (req, res, next) => {
     if (!id || isNaN(parseInt(id))) {
         return next({ message: 'Bad request', status: 400 });
     }
+
+
     //Eliminacion
     try {
+        // Verifica si la defensa existe
+        const defensa = await prisma.defensas.findUnique({
+            where: {
+                id: parseInt(id),
+            },
+        });
+        // Si no existe, lanza un error
+        if (!defensa) {
+            throw new Error('Not Found');
+        }
         // Elimina las relaciones de la defensa y la defensa
         const deletedDefensa = await prisma.$transaction([
             prisma.reino_defensas.deleteMany({
@@ -144,16 +156,15 @@ const deleteDefensa = async (req, res, next) => {
                 },
             }),
         ]);
-        
+
         res.status(200).json({}); //OK
     } catch (error) {
-        if (error.code === 'P2025') {
-            error.status = 404; // Not Found
-        }
-        else {
+        if (error.message === 'Not Found') {
+            error.status = 404;
+        } else {
             error.status = 500; // Internal Server Error
         }
-        next(error);
+            next(error);
     }
 }
 //=============================================//
