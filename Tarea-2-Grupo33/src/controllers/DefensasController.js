@@ -130,7 +130,6 @@ const deleteDefensa = async (req, res, next) => {
         return next({ message: 'Bad request', status: 400 });
     }
 
-
     //Eliminacion
     try {
         // Verifica si la defensa existe
@@ -147,7 +146,7 @@ const deleteDefensa = async (req, res, next) => {
         const deletedDefensa = await prisma.$transaction([
             prisma.reino_defensas.deleteMany({
                 where: {
-                    id_defensa: parseInt(id),
+                    defensaId: parseInt(id),
                 },
             }),
             prisma.defensas.delete({
@@ -164,9 +163,10 @@ const deleteDefensa = async (req, res, next) => {
         } else {
             error.status = 500; // Internal Server Error
         }
-            next(error);
+        next(error);
     }
 }
+
 //=============================================//
 const DefensasController = {
     createDefensa,  // Metodo solido OK
