@@ -52,7 +52,7 @@ const getPersonajes = async (req, res, next) => {
   };
   
 
-  const getPersonajeById = async (req, res, next) => {
+const getPersonajeById = async (req, res, next) => {
     const { id } = req.params;
     try {
       const personaje = await prisma.personajes.findUnique({
