@@ -1,7 +1,7 @@
 import prisma from '../prismaClient.js'
 
 const createPersonaje = async (req, res, next) => {
-    const { nombre, fuerza, fecha_nacimiento, objeto, descripcion, sueldo, fecha_inicio, fecha_termino } = req.body;
+    const { nombre, fuerza, fecha_nacimiento, objeto} = req.body;
 
     // Validación de datos
     if (!nombre ||
@@ -10,14 +10,7 @@ const createPersonaje = async (req, res, next) => {
         !Number.isInteger(fuerza) ||
         fuerza < 0 ||
         isNaN(new Date(fecha_nacimiento)) ||
-        (objeto && (objeto.length > 30 || typeof objeto !== 'string')) ||
-        !descripcion ||
-        descripcion.length > 45 ||
-        typeof descripcion !== 'string' ||
-        !Number.isInteger(sueldo) ||
-        sueldo < 0 ||
-        isNaN(new Date(fecha_inicio)) ||
-        isNaN(new Date(fecha_termino))) {
+        (objeto && (objeto.length > 30 || typeof objeto !== 'string'))) {
         return next({ status: 400 }); // Bad Request
     }
     
@@ -29,22 +22,6 @@ const createPersonaje = async (req, res, next) => {
                 fuerza,
                 fecha_nacimiento,
                 objeto,
-                personaje_tiene_trabajo: 
-                {
-                    create: 
-                    {
-                        fecha_inicio,
-                        fecha_termino,
-                        trabajo: 
-                        {
-                            create: //cambiar por connect
-                            {
-                                descripcion,
-                                sueldo
-                            }
-                        }
-                    }
-                }
             },
         })
 
@@ -63,56 +40,42 @@ const createPersonaje = async (req, res, next) => {
 
 
 
-const getPersonajes = async (req , res, next) => {
+const getPersonajes = async (req, res, next) => {
     try {
-        const personajes = await prisma.personajes.findMany({
-            include: {
-                personaje_tiene_trabajo: {
-                    include: {
-                        trabajo: true
-                    }
-                }
-            }
-        });
-
-        res.status(200).json(personajes);
+      const personajes = await prisma.personajes.findMany();
+  
+      res.status(200).json(personajes);
     } catch (err) {
-        err.status = 500;
-        next(err);
+      err.status = 500;
+      next(err);
     }
-}
+  };
+  
 
-// Obtener un personaje por ID con su relación trabajo.
-const getPersonajeById = async (req, res, next) => {
+  const getPersonajeById = async (req, res, next) => {
     const { id } = req.params;
     try {
-        const personaje = await prisma.personajes.findUnique({
-            where: {
-                id: parseInt(id),
-            },
-            include: {
-                personaje_tiene_trabajo: { 
-                    include: {
-                        trabajo: true
-                    }
-                }
-            }
-        });
-
-        if (!personaje) {
-            throw new Error('Not Found');
-        }
-
-        res.status(200).json(personaje);
+      const personaje = await prisma.personajes.findUnique({
+        where: {
+          id: parseInt(id),
+        },
+      });
+  
+      if (!personaje) {
+        throw new Error('Not Found');
+      }
+  
+      res.status(200).json(personaje);
     } catch (err) {
-        if (err.message === 'Not Found') {
-            err.status = 404;
-        } else {
-            err.status = 500;
-        }
-        next(err);
+      if (err.message === 'Not Found') {
+        err.status = 404;
+      } else {
+        err.status = 500;
+      }
+      next(err);
     }
-}
+  };
+  
 
 const updatePersonaje = async (req, res, next) => {
     const { id } = req.params;
@@ -155,61 +118,63 @@ const updatePersonaje = async (req, res, next) => {
         next(err);
     }
 }
-
-
 const deletePersonaje = async (req, res, next) => {
     const { id } = req.params;
-    try {
-        // Obtiene el trabajo del personaje antes de eliminarlo
-        const trabajoPersonaje = await prisma.personaje_tiene_trabajo.findMany({
-            where: {
-                id_personaje: parseInt(id),
-            },
-            select: {
-                id_trabajo: true
-            }
-        });
+    if (!Number.isInteger(parseInt(id))) {
+        return next({ status: 400 });}
 
-        // Elimina las relaciones del personaje y al personaje
-        const deletedPersonaje = await prisma.$transaction([
-            prisma.personaje_tiene_trabajo.deleteMany({
-                where: {
-                    id_personaje: parseInt(id),
-                },
-            }),
-            prisma.personaje_habita_reino.deleteMany({
-                where: {
-                    id_personaje: parseInt(id),
-                },
-            }),
+    try {
+        // Comprueba si existen relaciones antes de intentar eliminarlas
+        const tieneTrabajo = await prisma.personaje_tiene_trabajo.count({
+            where: { id_personaje: parseInt(id) }
+        }) > 0;
+
+        const habitaReino = await prisma.personaje_habita_reino.count({
+            where: { id_personaje: parseInt(id) }
+        }) > 0;
+
+        const transacciones = [
             prisma.personajes.delete({
-                where: {
-                    id: parseInt(id),
-                },
+                where: { id: parseInt(id) },
             }),
-        ]);
+        ];
+
+        if (tieneTrabajo) {
+            transacciones.unshift(
+                prisma.personaje_tiene_trabajo.deleteMany({
+                    where: { id_personaje: parseInt(id) },
+                })
+            );
+        }
+
+        if (habitaReino) {
+            transacciones.unshift(
+                prisma.personaje_habita_reino.deleteMany({
+                    where: { id_personaje: parseInt(id) },
+                })
+            );
+        }
+
+        const deletedPersonaje = await prisma.$transaction(transacciones);
 
         // Si el personaje tenía un trabajo, verifica si es la última persona en ese trabajo
-        if (trabajoPersonaje.length > 0) {
+        if (tieneTrabajo) {
+            const trabajoPersonaje = await prisma.personaje_tiene_trabajo.findMany({
+                where: { id_personaje: parseInt(id) },
+                select: { id_trabajo: true }
+            });
             for (let trabajo of trabajoPersonaje) {
                 const personasEnTrabajo = await prisma.personaje_tiene_trabajo.count({
-                    where: {
-                        id_trabajo: trabajo.id_trabajo,
-                    },
+                    where: { id_trabajo: trabajo.id_trabajo },
                 });
-
                 // Si es la última persona en el trabajo, elimina el trabajo
                 if (personasEnTrabajo === 0) {
-                    await prisma.trabajos.delete({
-                        where: {
-                            id: trabajo.id_trabajo,
-                        },
-                    });
+                    await prisma.trabajos.delete({ where: { id: trabajo.id_trabajo } });
                 }
             }
         }
 
-        res.status(200).json(deletedPersonaje[2]);
+        res.status(200).json(deletedPersonaje[deletedPersonaje.length - 1]);
     } catch (err) {
         if (err.code === 'P2025') {
             err.status = 404;
@@ -219,7 +184,8 @@ const deletePersonaje = async (req, res, next) => {
         }
         next(err);
     }
-}
+};
+
 
 const PersonajesController = {
     createPersonaje,

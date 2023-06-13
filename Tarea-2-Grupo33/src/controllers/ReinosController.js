@@ -11,7 +11,6 @@ const createReino = async (req, res, next) => {
         ubicacion.length > 45 ||
         !Number.isInteger(superficie) ||
         superficie < 0 ||
-        fecha_registro == null ||
         es_gobernante == null ||
         !Number.isInteger(id_personaje) ||
         id_personaje < 0) {
@@ -27,6 +26,7 @@ const createReino = async (req, res, next) => {
         return next({  status: 404 });
     }
     try {
+        let fecha_registro = new Date();
         const newReino = await prisma.reinos.create({
             data: {
                 nombre,
@@ -34,7 +34,7 @@ const createReino = async (req, res, next) => {
                 superficie,
                 personaje_habita_reino: {
                     create: {
-                        fecha_registro,
+                        fecha_registro ,
                         es_gobernante,
                         personaje: {
                             connect: {
@@ -163,6 +163,21 @@ const deleteReino = async (req, res, next) => {
         if (!reino) {
             return next({  status: 404 });
         }
+
+        // Eliminamos las relaciones de diplomacia
+        await prisma.diplomacias.deleteMany({
+            where: {
+                OR: [
+                        {
+                            id_reino_1: parseInt(id),
+                        },
+                    {
+                            id_reino_2: parseInt(id),
+                        },
+                    ],
+                    },
+                    });
+                                
 
         //  Eliminamos las relaciones
         await prisma.reino_defensas.deleteMany({
