@@ -125,12 +125,12 @@ const updateDefensa = async (req, res, next) => {
 const deleteDefensa = async (req, res, next) => {
     //Parametros
     const { id } = req.params;
+
     //Validacion de parametros
     if (!id || isNaN(parseInt(id))) {
         return next({ message: 'Bad request', status: 400 });
     }
 
-    //Eliminacion
     try {
         // Verifica si la defensa existe
         const defensa = await prisma.defensas.findUnique({
@@ -138,25 +138,43 @@ const deleteDefensa = async (req, res, next) => {
                 id: parseInt(id),
             },
         });
+
         // Si no existe, lanza un error
         if (!defensa) {
             throw new Error('Not Found');
         }
-        // Elimina las relaciones de la defensa y la defensa
-        const deletedDefensa = await prisma.$transaction([
-            prisma.reino_defensas.deleteMany({
-                where: {
-                    defensaId: parseInt(id),
-                },
-            }),
+
+        // Comprueba si existen relaciones de defensa con reinos
+        const hasRelation = await prisma.reino_defensas.count({
+            where: {
+                defensaId: parseInt(id),
+            },
+        }) > 0;
+
+        const transactions = [
             prisma.defensas.delete({
                 where: {
                     id: parseInt(id),
                 },
             }),
-        ]);
+        ];
 
-        res.status(200).json({}); //OK
+        // Si hay una relación, añade la eliminación de la relación a la transacción
+        if (hasRelation) {
+            transactions.unshift(
+                prisma.reino_defensas.deleteMany({
+                    where: {
+                        defensaId: parseInt(id),
+                    },
+                })
+            );
+        }
+
+        // Ejecuta la transacción
+        const deletedDefensa = await prisma.$transaction(transactions);
+
+        //OK
+        res.status(200).json(deletedDefensa[deletedDefensa.length - 1]);
     } catch (error) {
         if (error.message === 'Not Found') {
             error.status = 404;
@@ -166,6 +184,7 @@ const deleteDefensa = async (req, res, next) => {
         next(error);
     }
 }
+
 
 //=============================================//
 const DefensasController = {

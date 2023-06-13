@@ -87,7 +87,6 @@ const deleteTrabajo = async (req, res,next) => {
     }
 
     try {
-        // Check if the job exists
         const trabajo = await prisma.trabajos.findUnique({
             where: {
                 id: parseInt(id),
@@ -101,14 +100,12 @@ const deleteTrabajo = async (req, res,next) => {
             return;
         }
 
-        // Find the personajes related to the job
         const personajesRelacionados = await prisma.personaje_tiene_trabajo.findMany({
             where: {
                 id_trabajo: parseInt(id),
             },
         });
 
-        // Delete the relations in the joining table
         const deleteRelaciones = personajesRelacionados.map(relacion => {
             return prisma.personaje_tiene_trabajo.delete({
                 where: { 

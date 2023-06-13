@@ -162,16 +162,15 @@ const updateDefensaReino = async (req, res, next) => {
 
         res.status(200).json(updatedRelDefRein); //OK
     } catch (error) {
-        if (error instanceof prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-            error.status = 404; // Not Found
-        }
-        else {
+        if (error.code === 'P2025') {
+            error.status = 404;
+            error.message = 'Not Found';
+        } else {
             error.status = 500; // Internal Server Error
         }
-
         next(error);
     }
-}
+}    
 
 
 
