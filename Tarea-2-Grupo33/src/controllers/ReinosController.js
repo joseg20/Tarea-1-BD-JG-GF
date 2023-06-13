@@ -100,11 +100,7 @@ const updateReino = async (req, res, next) => {
         typeof ubicacion !== 'string' ||
         ubicacion.length > 45 ||
         !Number.isInteger(superficie) ||
-        superficie < 0 ||
-        fecha_registro == null ||
-        es_gobernante == null ||
-        !Number.isInteger(id_personaje) ||
-        id_personaje < 0) {
+        superficie < 0 ) {
         return next({ status: 400 });
     }
 
@@ -178,7 +174,6 @@ const deleteReino = async (req, res, next) => {
                     },
                     });
                                 
-
         //  Eliminamos las relaciones
         await prisma.reino_defensas.deleteMany({
             where: {
