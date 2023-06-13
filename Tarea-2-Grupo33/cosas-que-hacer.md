@@ -1,7 +1,6 @@
 # Prioritarias
 
 # IceBox
-* ACTUALIZAR DELETE REINO CUANDO SE HAGA DIPLOMACIA
 
 * DOCUMENTAR PERSONA_TRABAJO
 * DOCUMENTAR KARTS
@@ -17,7 +16,6 @@
 * Llenar un poco las bases de datos en general
 
 # En progreso
-* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS REINOS_PERSONA **guillermo**
 
 # Terminadas
 * DefensasController FULL SOLIDO TODOS LOS METODOS PROBADOS **jose**
@@ -39,7 +37,8 @@
 * ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS PERSONA_TRABAJO **guillermo**
 * Probar metodo PERSONA_TRABAJO **jose**
 * probar delete cascada en defensa(ya se hizo en codigo pero no se probo)**jose**
-* actualizar reinos al borrar diplomacia **reinos**
+* actualizar reinos al borrar diplomacia **jose**
+* ACTUALZAR ERRORES DE VALIDACION DE PARAMETROS REINOS_PERSONA **guillermo**
 
 
 # OPCIONAL
