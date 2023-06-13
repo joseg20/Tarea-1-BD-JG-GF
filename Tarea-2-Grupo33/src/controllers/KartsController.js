@@ -107,16 +107,10 @@ const updateKart = async (req, res, next) => {
     }
     let { modelo, color, velocidad_maxima, id_personaje } = req.body;
     //Validacion de parametros
-    if (!modelo ||
-        modelo.length > 45 ||
-        typeof modelo !== 'string' ||
-        !color || 
-        color.length > 45 ||
-        typeof color !== 'string' ||
-        !Number.isInteger(velocidad_maxima) ||
-        velocidad_maxima < 0 ||
-        !Number.isInteger(id_personaje) ||
-        id_personaje < 0){
+    if ((modelo && (modelo.length > 45 || typeof modelo !== 'string')) ||
+        (color && (color.length > 45 || typeof color !== 'string')) ||
+        (velocidad_maxima && (!Number.isInteger(velocidad_maxima) || velocidad_maxima < 0)) ||
+        (id_personaje && (!Number.isInteger(id_personaje) || id_personaje < 0))) {
         return next({  status: 400 });
     }
     try {
@@ -126,7 +120,6 @@ const updateKart = async (req, res, next) => {
         if(color) data.color = color;
         if(velocidad_maxima) data.velocidad_maxima = velocidad_maxima;
         if(id_personaje) data.id_personaje = id_personaje;
-
 
         const updatedKart = await prisma.karts.update({
             where: {
@@ -146,6 +139,7 @@ const updateKart = async (req, res, next) => {
         next(err);
     }
 }
+
 
 
 const deleteKart = async (req, res, next) => {
